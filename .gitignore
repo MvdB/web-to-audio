@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+.python-version
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project output
+out/
+output/
+*.mp3
+*.wav
+*.html.cache
+.cache/
+
+# Tests / coverage
+.pytest_cache/
+.coverage
+htmlcov/

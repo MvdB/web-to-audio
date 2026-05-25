@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "web-to-audio"
+version = "0.1.0"
+description = "Extract clean body text from web pages (e.g. vatican.va encyclicals) and synthesize it to MP3 with modern open-weights TTS models."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Michael van den Berg" }]
+keywords = ["tts", "text-to-speech", "vatican", "encyclical", "voxtral", "qwen3-tts", "audiobook"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+dependencies = [
+    "beautifulsoup4>=4.12",
+    "lxml>=4.9",
+    "requests>=2.31",
+    "soundfile>=0.12",
+    "numpy>=1.24",
+    "pydub>=0.25",
+    "imageio-ffmpeg>=0.4",
+]
+
+[project.optional-dependencies]
+voxtral = [
+    "httpx>=0.27",
+]
+qwen3 = [
+    # `qwen-tts` is required at runtime; install separately as it pulls in torch.
+    # See README for installation instructions.
+]
+dev = [
+    "pytest>=7",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+web-to-audio = "web_to_audio.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/your-username/web-to-audio"
+Issues = "https://github.com/your-username/web-to-audio/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
