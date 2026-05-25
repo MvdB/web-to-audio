@@ -102,3 +102,58 @@ def synthesize(
     assert sample_rate is not None
     full = np.concatenate(audio_pieces)
     return save_as_mp3(full, sample_rate, Path(output_path), bitrate=mp3_bitrate)
+
+
+def synthesize_chapters(
+    doc,
+    output_dir: str | Path,
+    *,
+    backend: TTSBackend = "qwen3",
+    language: str = "German",
+    voice: str = "",
+    instruct: str | None = None,
+    max_chunk_chars: int = 800,
+    backend_kwargs: dict | None = None,
+    mp3_bitrate: str = "128k",
+) -> Path:
+    """Render one MP3 per numbered chapter of ``doc`` plus a playlist.
+
+    Writes ``output_dir/NNN.mp3`` for each chapter (in document order),
+    a ``playlist.m3u`` and an ``index.json`` over all of them, and returns
+    the playlist path. This is the simple serial reference implementation;
+    for long documents use ``tools/synth_chapters.py`` (resumable + parallel).
+    """
+    from .audio import save_as_mp3
+    from .chapters import split_into_chapters
+    from .chunk import chunk_text
+    from .playlist import PlaylistEntry, write_json_index, write_m3u
+
+    out_dir = Path(output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    bk = get_backend(backend, **(backend_kwargs or {}))
+
+    chapters = split_into_chapters(doc)
+    entries: list[PlaylistEntry] = []
+
+    for pos, ch in enumerate(chapters, start=1):
+        pieces: list[np.ndarray] = []
+        sample_rate: int | None = None
+        for chunk in chunk_text(ch.text, max_chars=max_chunk_chars):
+            opts = TTSOptions(
+                text=chunk, language=language, voice=voice,
+                instruct=instruct, max_chunk_chars=max_chunk_chars,
+            )
+            wav, sr = bk.synthesize(opts)
+            sample_rate = sr if sample_rate is None else sample_rate
+            pieces.append(wav)
+
+        full = np.concatenate(pieces) if pieces else np.zeros(0, dtype=np.float32)
+        sr = sample_rate or 24000
+        mp3_path = out_dir / f"{pos:03d}.mp3"
+        save_as_mp3(full, sr, mp3_path, bitrate=mp3_bitrate)
+        entries.append(
+            PlaylistEntry(path=mp3_path.name, title=ch.title, duration_seconds=len(full) / sr)
+        )
+
+    write_json_index(out_dir / "index.json", entries, title=getattr(doc, "title", ""))
+    return write_m3u(out_dir / "playlist.m3u", entries)

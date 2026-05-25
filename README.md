@@ -75,9 +75,39 @@ web-to-audio "https://www.vatican.va/content/leo-xiv/de/encyclicals/documents/20
 # Vertonung mit Voxtral (Server muss laufen):
 web-to-audio "https://www.vatican.va/content/leo-xiv/de/encyclicals/documents/20260515-magnifica-humanitas.html" \
     --backend voxtral \
-    --voice narration_male \
+    --voice de_male \
     --voxtral-url http://localhost:8000/v1 \
     -o out/magnifica-humanitas.mp3
+```
+
+### Eine MP3 pro Kapitel + Playlist
+
+Mit `--split-chapters` wird nicht eine große Datei erzeugt, sondern **eine
+MP3 pro nummeriertem Abschnitt** (bei *Magnifica humanitas* sind das 245),
+abgelegt als `NNN.mp3` im Ausgabeverzeichnis, zusammen mit einer
+`playlist.m3u` (von VLC, mpv, Autoradios, Podcast-Apps lesbar) und einer
+`index.json`:
+
+```bash
+web-to-audio "https://www.vatican.va/content/leo-xiv/de/encyclicals/documents/20260515-magnifica-humanitas.html" \
+    --backend voxtral --voice de_male \
+    --split-chapters \
+    -o out/magnifica-humanitas-chapters
+```
+
+Vorangestellte Überschriften (z. B. `ERSTES KAPITEL`) werden dem jeweils
+folgenden Abschnitt zugeordnet und mitgesprochen; die Schlussformel mit
+Ort, Datum und Unterschrift fällt in das letzte Kapitel.
+
+Für lange Dokumente bietet `tools/synth_chapters.py` dieselbe Funktion
+**wiederaufnehmbar und parallel** (Voxtral): jeder Chunk wird unter
+`.chunks/NNN/` zwischengespeichert, ein Abbruch kann mit identischen
+Argumenten fortgesetzt werden, und `--concurrency` lässt vLLM die Anfragen
+auf der GPU batchen:
+
+```bash
+python tools/synth_chapters.py "$URL" out/magnifica-humanitas-chapters \
+    --backend voxtral --voice de_male --concurrency 8
 ```
 
 ## Wie es funktioniert
@@ -98,6 +128,12 @@ web-to-audio "https://www.vatican.va/content/leo-xiv/de/encyclicals/documents/20
    Audio jedes Chunks wird konkatieniert.
 6. **MP3-Export** (`audio.save_as_mp3`) — via `soundfile` + `pydub`/ffmpeg.
 
+Mit `--split-chapters` tritt zwischen Schritt 3 und 4 die
+**Kapitel-Aufteilung** (`chapters.split_into_chapters`): Absätze werden an
+ihren nummerierten Abschnittsmarken (`1.`, `2.`, …) zu Kapiteln gruppiert,
+jedes Kapitel einzeln vertont und über `playlist.write_m3u` eine Playlist
+geschrieben.
+
 ## Projektstruktur
 
 ```
@@ -105,12 +141,15 @@ src/web_to_audio/
 ├── __init__.py
 ├── extract.py         # Text-Extraktion (vatican.va)
 ├── chunk.py           # Aufteilung in TTS-Chunks
-├── tts.py             # Backend-Dispatcher + synthesize()
+├── chapters.py        # Gruppierung in nummerierte Kapitel
+├── playlist.py        # M3U- und JSON-Playlist schreiben
+├── tts.py             # Backend-Dispatcher + synthesize[_chapters]()
 ├── audio.py           # WAV → MP3
 ├── backends/
 │   ├── voxtral.py     # HTTP-Client für vLLM-Omni Voxtral
 │   └── qwen3.py       # In-Process via qwen-tts
 └── cli.py             # web-to-audio Entry-Point
+tools/                 # synth_resumable.py, synth_chapters.py (wiederaufnehmbar)
 tests/                 # Pytest, läuft ohne GPU/Netz
 examples/              # Beispielaufrufe
 ```
@@ -138,6 +177,16 @@ synthesize(
     backend="qwen3",
     language="German",
     voice="Aiden",
+)
+
+# Oder: eine MP3 pro Kapitel + Playlist
+from web_to_audio import synthesize_chapters
+
+synthesize_chapters(
+    doc,
+    output_dir="out/magnifica-humanitas-chapters",
+    backend="voxtral",
+    voice="de_male",
 )
 ```
 

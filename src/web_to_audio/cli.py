@@ -21,7 +21,13 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("url", help="URL of the page to convert.")
     parser.add_argument(
         "-o", "--output", default=None,
-        help="Output MP3 path. Default: derived from the URL slug, in ./out/.",
+        help="Output MP3 path (or output directory with --split-chapters). "
+             "Default: derived from the URL slug, in ./out/.",
+    )
+    parser.add_argument(
+        "--split-chapters", action="store_true",
+        help="Render one MP3 per numbered chapter into the output directory, "
+             "plus a playlist.m3u and index.json over all of them.",
     )
     parser.add_argument(
         "--text-only", action="store_true",
@@ -97,13 +103,33 @@ def main(argv: list[str] | None = None) -> int:
         print(doc.text)
         return 0
 
-    output = Path(args.output) if args.output else _default_output_path(args.url)
-    print(f"[tts] backend  : {args.backend}", file=sys.stderr)
-    print(f"[tts] output   : {output}", file=sys.stderr)
-
     backend_kwargs: dict = {}
     if args.backend == "voxtral" and args.voxtral_url:
         backend_kwargs["base_url"] = args.voxtral_url
+
+    if args.split_chapters:
+        out_dir = Path(args.output) if args.output else _default_output_path(args.url).with_suffix("")
+        print(f"[tts] backend  : {args.backend}", file=sys.stderr)
+        print(f"[tts] chapters → {out_dir}/", file=sys.stderr)
+        from .tts import synthesize_chapters
+
+        playlist = synthesize_chapters(
+            doc,
+            output_dir=out_dir,
+            backend=args.backend,
+            language=args.language,
+            voice=args.voice,
+            instruct=args.instruct,
+            max_chunk_chars=args.max_chunk_chars,
+            backend_kwargs=backend_kwargs,
+            mp3_bitrate=args.mp3_bitrate,
+        )
+        print(f"[tts] wrote playlist {playlist}", file=sys.stderr)
+        return 0
+
+    output = Path(args.output) if args.output else _default_output_path(args.url)
+    print(f"[tts] backend  : {args.backend}", file=sys.stderr)
+    print(f"[tts] output   : {output}", file=sys.stderr)
 
     from .tts import synthesize
 
