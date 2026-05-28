@@ -74,10 +74,11 @@ def synthesize(
     """
     from .audio import save_as_mp3
     from .chunk import chunk_text
+    from .normalize import normalize_for_speech
 
     bk = get_backend(backend, **(backend_kwargs or {}))
 
-    chunks = chunk_text(text, max_chars=max_chunk_chars)
+    chunks = chunk_text(normalize_for_speech(text), max_chars=max_chunk_chars)
     if not chunks:
         raise ValueError("Input text is empty after chunking.")
 

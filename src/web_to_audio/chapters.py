@@ -20,6 +20,7 @@ import re
 from dataclasses import dataclass, field
 
 from .extract import ExtractedDocument
+from .normalize import normalize_for_speech
 
 # A section starts a paragraph with "<n>." — note that the source is not
 # always consistent about the space after the dot (e.g. "102.Der Einsatz").
@@ -51,8 +52,12 @@ class Chapter:
 
     @property
     def text(self) -> str:
-        """Full spoken text: heading lines first, then every section body."""
-        return "\n\n".join([*self.headings, *self.paragraphs])
+        """Full spoken text: heading lines first, then every section body.
+
+        ALL-CAPS heading lines are reformatted to sentence case so the TTS
+        reads them as words (see :mod:`web_to_audio.normalize`).
+        """
+        return normalize_for_speech("\n\n".join([*self.headings, *self.paragraphs]))
 
     def __len__(self) -> int:
         return len(self.text)

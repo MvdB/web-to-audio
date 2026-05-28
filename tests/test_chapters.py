@@ -103,10 +103,12 @@ def test_document_starting_with_a_section_creates_headingless_chapter():
 
 
 def test_title_and_text():
+    # title stays raw (used for filenames / display); spoken text is
+    # normalised so the all-caps heading gets read as a word.
     doc = _doc(["EINLEITUNG", "1. Inhalt."])
     ch = split_into_chapters(doc)[0]
     assert ch.title == "EINLEITUNG"
-    assert ch.text == "EINLEITUNG\n\n1. Inhalt."
+    assert ch.text == "Einleitung\n\n1. Inhalt."
 
 
 def test_title_for_multi_heading_chapter():

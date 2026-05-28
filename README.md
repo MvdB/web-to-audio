@@ -137,9 +137,14 @@ python tools/synth_chapters.py "$URL" out/magnifica-humanitas-chapters \
 4. **Chunking** (`chunk.chunk_text`): Aufteilung an Absatzgrenzen, dann an
    Satzgrenzen, mit hartem Cap (Standard 800 Zeichen) — das hält Eingaben
    im Sweet-Spot der TTS-Modelle.
-5. **TTS** (`tts.synthesize`): Backend wird über `--backend` ausgewählt.
+5. **Text-Normalisierung** (`normalize.normalize_for_speech`): Zeilen, die
+   überwiegend aus Großbuchstaben bestehen (z. B. `EINLEITUNG`,
+   `ERSTES KAPITEL`, `LEO PP. XIV`), werden zur Vertonung in Satzschreibung
+   gewandelt — Voxtral & Co. lesen sonst Buchstabe für Buchstabe oder mit
+   unnatürlicher Betonung. Echte römische Ziffern (`XIV`, …) bleiben groß.
+6. **TTS** (`tts.synthesize`): Backend wird über `--backend` ausgewählt.
    Audio jedes Chunks wird konkatieniert.
-6. **MP3-Export** (`audio.save_as_mp3`) — via `soundfile` + `pydub`/ffmpeg.
+7. **MP3-Export** (`audio.save_as_mp3`) — via `soundfile` + `pydub`/ffmpeg.
 
 Mit `--split-chapters` tritt zwischen Schritt 3 und 4 die
 **Kapitel-Aufteilung** (`chapters.split_into_chapters`): jede
@@ -155,6 +160,7 @@ src/web_to_audio/
 ├── extract.py         # Text-Extraktion (vatican.va)
 ├── chunk.py           # Aufteilung in TTS-Chunks
 ├── chapters.py        # Gruppierung in nummerierte Kapitel
+├── normalize.py       # Großschreibung für TTS in Satzschreibung wandeln
 ├── playlist.py        # M3U- und JSON-Playlist schreiben
 ├── tts.py             # Backend-Dispatcher + synthesize[_chapters]()
 ├── audio.py           # WAV → MP3
