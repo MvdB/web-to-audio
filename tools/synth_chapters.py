@@ -29,7 +29,7 @@ import numpy as np
 import soundfile as sf
 
 from web_to_audio.audio import save_as_mp3
-from web_to_audio.chapters import Chapter, split_into_chapters
+from web_to_audio.chapters import Chapter, chapter_filename, split_into_chapters
 from web_to_audio.chunk import chunk_text
 from web_to_audio.extract import extract_from_url
 from web_to_audio.playlist import PlaylistEntry, write_json_index, write_m3u
@@ -107,7 +107,7 @@ def main() -> int:
     print(f"[mp3] assembling {len(chapters)} chapter files", flush=True)
     entries: list[PlaylistEntry] = []
     for pos, ch, ch_chunks in plan:
-        mp3_path = out_dir / f"{pos:03d}.mp3"
+        mp3_path = out_dir / chapter_filename(pos, ch)
         ch_dir = chunk_root / f"{pos:03d}"
         pieces = []
         sample_rate = 24000

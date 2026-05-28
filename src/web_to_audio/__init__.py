@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from .chapters import Chapter, split_into_chapters
+from .chapters import Chapter, chapter_filename, split_into_chapters
 from .extract import ExtractedDocument, extract_from_url, extract_vatican
 from .tts import TTSBackend, synthesize, synthesize_chapters
 
@@ -11,6 +11,7 @@ __all__ = [
     "extract_from_url",
     "extract_vatican",
     "Chapter",
+    "chapter_filename",
     "split_into_chapters",
     "TTSBackend",
     "synthesize",

@@ -116,15 +116,15 @@ def synthesize_chapters(
     backend_kwargs: dict | None = None,
     mp3_bitrate: str = "128k",
 ) -> Path:
-    """Render one MP3 per numbered chapter of ``doc`` plus a playlist.
+    """Render one MP3 per heading-group chapter of ``doc`` plus a playlist.
 
-    Writes ``output_dir/NNN.mp3`` for each chapter (in document order),
+    Writes ``output_dir/NN - Title.mp3`` for each chapter (in document order),
     a ``playlist.m3u`` and an ``index.json`` over all of them, and returns
     the playlist path. This is the simple serial reference implementation;
     for long documents use ``tools/synth_chapters.py`` (resumable + parallel).
     """
     from .audio import save_as_mp3
-    from .chapters import split_into_chapters
+    from .chapters import chapter_filename, split_into_chapters
     from .chunk import chunk_text
     from .playlist import PlaylistEntry, write_json_index, write_m3u
 
@@ -149,7 +149,7 @@ def synthesize_chapters(
 
         full = np.concatenate(pieces) if pieces else np.zeros(0, dtype=np.float32)
         sr = sample_rate or 24000
-        mp3_path = out_dir / f"{pos:03d}.mp3"
+        mp3_path = out_dir / chapter_filename(pos, ch)
         save_as_mp3(full, sr, mp3_path, bitrate=mp3_bitrate)
         entries.append(
             PlaylistEntry(path=mp3_path.name, title=ch.title, duration_seconds=len(full) / sr)

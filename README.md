@@ -83,10 +83,14 @@ web-to-audio "https://www.vatican.va/content/leo-xiv/de/encyclicals/documents/20
 ### Eine MP3 pro Kapitel + Playlist
 
 Mit `--split-chapters` wird nicht eine große Datei erzeugt, sondern **eine
-MP3 pro nummeriertem Abschnitt** (bei *Magnifica humanitas* sind das 245),
-abgelegt als `NNN.mp3` im Ausgabeverzeichnis, zusammen mit einer
-`playlist.m3u` (von VLC, mpv, Autoradios, Podcast-Apps lesbar) und einer
-`index.json`:
+MP3 pro Überschriften-Gruppe** (bei *Magnifica humanitas* gut 60 statt 245
+einzelne Abschnitte). Jede unnummerierte Überschrift im Dokument startet
+ein neues Kapitel und nimmt alle darauf folgenden nummerierten Abschnitte
+in sich auf. Direkt aufeinanderfolgende Überschriften (z. B. `ERSTES
+KAPITEL` + ALL-CAPS-Untertitel) gehören zur selben Gruppe.
+
+Die Dateien werden als `NN - Titel.mp3` benannt, dazu kommen `playlist.m3u`
+(von VLC, mpv, Autoradios, Podcast-Apps lesbar) und `index.json`:
 
 ```bash
 web-to-audio "https://www.vatican.va/content/leo-xiv/de/encyclicals/documents/20260515-magnifica-humanitas.html" \
@@ -95,9 +99,18 @@ web-to-audio "https://www.vatican.va/content/leo-xiv/de/encyclicals/documents/20
     -o out/magnifica-humanitas-chapters
 ```
 
-Vorangestellte Überschriften (z. B. `ERSTES KAPITEL`) werden dem jeweils
-folgenden Abschnitt zugeordnet und mitgesprochen; die Schlussformel mit
-Ort, Datum und Unterschrift fällt in das letzte Kapitel.
+Beispiel-Dateinamen:
+
+```
+01 - EINLEITUNG.mp3
+02 - Die res novae unserer Zeit.mp3
+06 - ERSTES KAPITEL – EIN DYNAMISCHES DENKEN IM GEISTE DES EVANGELIUMS.mp3
+07 - Eine Kirche unterwegs in der Geschichte der Menschheit.mp3
+…
+```
+
+Die Schlussformel mit Ort, Datum und Unterschrift fällt in das letzte
+Kapitel.
 
 Für lange Dokumente bietet `tools/synth_chapters.py` dieselbe Funktion
 **wiederaufnehmbar und parallel** (Voxtral): jeder Chunk wird unter
@@ -129,10 +142,10 @@ python tools/synth_chapters.py "$URL" out/magnifica-humanitas-chapters \
 6. **MP3-Export** (`audio.save_as_mp3`) — via `soundfile` + `pydub`/ffmpeg.
 
 Mit `--split-chapters` tritt zwischen Schritt 3 und 4 die
-**Kapitel-Aufteilung** (`chapters.split_into_chapters`): Absätze werden an
-ihren nummerierten Abschnittsmarken (`1.`, `2.`, …) zu Kapiteln gruppiert,
-jedes Kapitel einzeln vertont und über `playlist.write_m3u` eine Playlist
-geschrieben.
+**Kapitel-Aufteilung** (`chapters.split_into_chapters`): jede
+unnummerierte Überschrift startet ein neues Kapitel und sammelt die
+nachfolgenden nummerierten Abschnitte ein, dann wird jedes Kapitel einzeln
+vertont und über `playlist.write_m3u` eine Playlist geschrieben.
 
 ## Projektstruktur
 
